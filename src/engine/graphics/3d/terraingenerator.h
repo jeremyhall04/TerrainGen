@@ -8,31 +8,38 @@
 class TerrainGenerator
 {
 private:
+	// Generator properties
+	glm::mat4 view;
+	glm::vec3 pos;
+	int chunkSize;
+	int chunksVisible;
+
+	Texture* texture;
+	Shader* shader;
+
 	// mesh properties
+	Mesh* mesh;
 	int width, resolution, amplification = 1;
 	int triangleIndex = 0;
 	int meshSimplificationIncrement, verticesPerLine;
-
-	Mesh* mesh;
-	Texture* texture;
-	Shader* shader;
 
 public:
 	TerrainGenerator();
 	TerrainGenerator(int width, glm::vec3 pos, float* height_data, int amplification, int lod);
 	~TerrainGenerator();
 
-	void init(glm::vec3 pos, float* height_data);
-	void update();
-	void render();
-
 private:
+	void init(glm::vec3 pos, float* height_data);
 	void addTriangle(int a, int b, int c) {
 		mesh->indices[triangleIndex] = a;
 		mesh->indices[triangleIndex + 1] = b;
 		mesh->indices[triangleIndex + 2] = c;
 		triangleIndex += 3;
 	}
+
+public:
+	void update();
+	void render();
 };
 
 float x_pow(float x);

@@ -110,50 +110,50 @@ void TerrainGenerator::init(glm::vec3 pos, float* height_data)
 		}
 	}
 
-	// setting data into buffers
-	glGenVertexArrays(1, &mesh->vao);
-	glGenBuffers(1, &mesh->vbo);
-	glGenBuffers(1, &mesh->ebo);
+	//// setting data into buffers
+	//glGenVertexArrays(1, &mesh->vao);
+	//glGenBuffers(1, &mesh->vbo);
+	//glGenBuffers(1, &mesh->ebo);
 
-	glBindVertexArray(mesh->vao);
-	glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
-	glBufferData(GL_ARRAY_BUFFER, mesh->nVertices * sizeof(VertexData), mesh->vd, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndex * sizeof(GLuint), mesh->indices, GL_STATIC_DRAW);
-	/*glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->nIndices * sizeof(GLuint), mesh->indices, GL_STATIC_DRAW);*/
+	//glBindVertexArray(mesh->vao);
+	//glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+	//glBufferData(GL_ARRAY_BUFFER, mesh->nVertices * sizeof(VertexData), mesh->vd, GL_STATIC_DRAW);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndex * sizeof(GLuint), mesh->indices, GL_STATIC_DRAW);
+	///*glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->nIndices * sizeof(GLuint), mesh->indices, GL_STATIC_DRAW);*/
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)0);						// position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)(3 * sizeof(float)));	// normals
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)(6 * sizeof(float)));	// uv
-	glEnableVertexAttribArray(2);
-	//glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)(8 * sizeof(float)));	// color
-	//glEnableVertexAttribArray(3);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)0);						// position
+	//glEnableVertexAttribArray(0);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)(3 * sizeof(float)));	// normals
+	//glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)(6 * sizeof(float)));	// uv
+	//glEnableVertexAttribArray(2);
+	////glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)(8 * sizeof(float)));	// color
+	////glEnableVertexAttribArray(3);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindVertexArray(0);
 }
 
-void TerrainGenerator::update()
-{
-	int index = 0, vIndex = 0;
-	GLuint currIndex = 0;
-	float amplitude = 10;
-	float ymin = 0, ymax = 0;
+//void TerrainGenerator::update()
+//{
+//	int index = 0, vIndex = 0;
+//	GLuint currIndex = 0;
+//	float amplitude = 10;
+//	float ymin = 0, ymax = 0;
+//
+//	glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+//	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh->nVertices * sizeof(float), mesh->vd);
+//	glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+//}
 
-	glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh->nVertices * sizeof(float), mesh->vd);
-	glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
-}
-
-void TerrainGenerator::render()
-{
-	texture->bind();
-	glBindVertexArray(mesh->vao);
-	glDrawElements(GL_TRIANGLES, triangleIndex, GL_UNSIGNED_INT, 0);
-	//glDrawElements(GL_TRIANGLES, mesh->nIndices, GL_UNSIGNED_INT, 0);
-}
+//void TerrainGenerator::render()
+//{
+//	texture->bind();
+//	glBindVertexArray(mesh->vao);
+//	glDrawElements(GL_TRIANGLES, triangleIndex, GL_UNSIGNED_INT, 0);
+//	//glDrawElements(GL_TRIANGLES, mesh->nIndices, GL_UNSIGNED_INT, 0);
+//}
 
 // function to smooth out slopes
 float x_pow(float x)

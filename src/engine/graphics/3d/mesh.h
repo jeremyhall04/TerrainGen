@@ -23,7 +23,7 @@ struct Mesh
 	GLuint* indices;
 	GLuint nVertices, nIndices;
 	glm::vec3 pos;
-	unsigned int vbo, vao, ebo;
+	//unsigned int vbo, vao, ebo;
 	//VAO* _vao;
 	//VBO* _vbo;
 	void init(glm::vec3 pos, int width, int height)

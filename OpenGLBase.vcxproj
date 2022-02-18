@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="src\engine\graphics\2d\quad2d.cpp" />
+    <ClCompile Include="src\engine\graphics\3d\terrainchunk.cpp" />
     <ClCompile Include="src\engine\graphics\buffers\VAO.cpp" />
     <ClCompile Include="src\engine\graphics\buffers\VBO.cpp" />
     <ClCompile Include="src\engine\graphics\shader\shader.cpp" />
@@ -173,6 +174,7 @@
     <ClInclude Include="src\engine\glHeader.h" />
     <ClInclude Include="src\engine\graphics\2d\quad2d.h" />
     <ClInclude Include="src\engine\graphics\3d\mesh.h" />
+    <ClInclude Include="src\engine\graphics\3d\terrainchunk.h" />
     <ClInclude Include="src\engine\graphics\buffers\VAO.h" />
     <ClInclude Include="src\engine\graphics\buffers\VBO.h" />
     <ClInclude Include="src\engine\graphics\renderer.h" />
