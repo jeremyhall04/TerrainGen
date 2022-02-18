@@ -11,14 +11,9 @@ TerrainChunk::TerrainChunk(int width, glm::vec3 pos, unsigned int seed, int lod 
 	pos *= width;
 	this->pos = pos;
 	height_data = new float[(width + 1) * (width + 1)];
-	amplification = 100;
-
-	//std::random_device rd;
-	//seed = rd();
-	//seed = 1180901704;
+	amplification = 120;
 	create_noise_map();
 
-	//shader = new Shader("res/shaders/heightmap.vert", "res/shaders/heightmap.frag");
 	texture = new Texture("res/images/noise_map.png");
 
 	mesh = new Mesh();
@@ -26,6 +21,7 @@ TerrainChunk::TerrainChunk(int width, glm::vec3 pos, unsigned int seed, int lod 
 	lod = lod < 6 ? lod : 6;
 	meshSimplificationIncrement = lod == 0 ? 1 : lod * 2;
 	verticesPerLine = width / meshSimplificationIncrement;
+	isVisible = false;
 
 	init();
 }
@@ -204,11 +200,16 @@ float TerrainChunk::x_pow(float x)
 	return y;
 }
 
-void TerrainChunk::update()
+float TerrainChunk::getNearestChunkEdge(glm::vec2 viewerPosition)
+{
+	// 
+	return 0.0f;
+}
+
+void TerrainChunk::update(glm::vec3 pos, int lod)
 {
 	mesh->clear();
-
-	meshSimplificationIncrement = 4;
+	meshSimplificationIncrement = lod;
 	verticesPerLine = width / meshSimplificationIncrement;
 	triangleIndex = 0;
 	

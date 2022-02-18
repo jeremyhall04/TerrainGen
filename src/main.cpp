@@ -8,11 +8,17 @@
 #include "engine/graphics/3d/terraingenerator.h"
 //#include "engine/graphics/3d/terrainchunk.h"
 #include <random>
+#include <map>
 
 float orth_w = 16.0f * 2.0f, orth_h = 9.0f * 2.0f;
 
 const int mapChunkSize = 240;
 int LOD = 0; // 0, 1, 2, 4, 6, 8, 12
+
+bool operator<(const glm::vec2& lhs, const glm::vec2& rhs)
+{
+	return lhs.x < rhs.x || lhs.x == rhs.x && (lhs.y < rhs.y || lhs.y == rhs.y /*&& lhs.z < rhs.z*/);
+}
 
 int main()
 {
@@ -22,11 +28,28 @@ int main()
 	Shader* shader = new Shader("res/shaders/heightmap.vert", "res/shaders/heightmap.frag");
 
 	/* TERRAIN */
+	TerrainGenerator* terrainGen = new TerrainGenerator(glm::vec3(0.0f), g_Camera3d->getViewMatrix(), mapChunkSize);
+
 	std::random_device rd;
 	unsigned int seed = rd();
 	seed = 1180901704;
-	TerrainChunk* terrain = new TerrainChunk(mapChunkSize, glm::vec3(0.0f), seed, 0);
-	TerrainChunk* terrain2 = new TerrainChunk(mapChunkSize, glm::vec3(1.0f, 0.0f, 0.0f), seed, LOD);
+
+	//std::map<char, int> first;
+	//first.insert(std::pair<char, int>('a', 10));
+	//std::map<char, int>::iterator it;
+	//printf("\n\n");
+	//for (it = first.begin(); it != first.end(); ++it)
+	//	std::cout << it->first << " => " << it->second << "\n";
+
+
+	//std::map<glm::vec2, TerrainChunk*> chunkMap;
+	//TerrainChunk chunk(mapChunkSize, glm::vec3(0.0f), seed, 0);
+	//glm::vec2 pos(0.0f);
+	//chunkMap.insert(std::make_pair(pos, &chunk));
+
+	//std::pair<glm::vec2, TerrainChunk*> p(glm::vec2(0.0f), &chunk);
+
+
 
 	glm::vec3 light_color(255/255.0f, 254/255.0f, 230/255.0f);
 	glm::vec3 light_pos(mapChunkSize/2.0f, 200.0f, mapChunkSize/2.0f);
@@ -44,15 +67,7 @@ int main()
 		window.clear();
 		window.processInput();
 
-		//if (t >= 20000 && !done)
-		//{
-		//	done = true;
-		//	t = 0;
-		//	printf("\nTIME");
-		//	terrain->update();
-		//	terrain2->update();
-		//}
-		//t++;
+		//terrainGen->update();
 
 		shader->enable();  
 		shader->setUniform3f("light_color", light_color);
@@ -60,14 +75,12 @@ int main()
 		shader->setUniformMat4("projection", g_Camera3d->getProjectionMatrix());
 		shader->setUniformMat4("view", g_Camera3d->getViewMatrix());
 
-		terrain->render();
-		terrain2->render();
+		terrainGen->render();
 
 		window.update();
 	}
 
-	delete terrain;
-	delete terrain2;
+	delete terrainGen;
 	delete g_Camera3d;
 	delete g_Camera2d;
 	delete shader;
