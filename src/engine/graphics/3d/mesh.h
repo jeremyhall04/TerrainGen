@@ -23,9 +23,7 @@ struct Mesh
 	GLuint* indices;
 	GLuint nVertices, nIndices;
 	glm::vec3 pos;
-	//unsigned int vbo, vao, ebo;
-	//VAO* _vao;
-	//VBO* _vbo;
+
 	void init(glm::vec3 pos, int width, int height)
 	{
 		this->width = width;
@@ -35,6 +33,12 @@ struct Mesh
 		nIndices = width * height * 6;
 		vd = new VertexData[nVertices];
 		indices = new GLuint[nIndices];
+	}
+
+	void clear()
+	{
+		delete vd;
+		delete indices;
 	}
 };
 

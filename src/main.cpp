@@ -1,5 +1,4 @@
 #include <iostream>
-//#include "engine/utils/timer.h"
 #include "engine/window/window.h"
 #include "engine/utils/camera.h"
 #include "engine/graphics/shader/shader.h"
@@ -7,7 +6,8 @@
 #include "engine/graphics/2d/quad2d.h"
 
 #include "engine/graphics/3d/terraingenerator.h"
-#include "engine/graphics/3d/terrainchunk.h"
+//#include "engine/graphics/3d/terrainchunk.h"
+#include <random>
 
 float orth_w = 16.0f * 2.0f, orth_h = 9.0f * 2.0f;
 
@@ -22,8 +22,11 @@ int main()
 	Shader* shader = new Shader("res/shaders/heightmap.vert", "res/shaders/heightmap.frag");
 
 	/* TERRAIN */
-	//TerrainGenerator* terrain = new TerrainGenerator(mapChunkSize, glm::vec3(0.0f), heightmap, 60, LOD);
-	TerrainChunk* terrain = new TerrainChunk(mapChunkSize, glm::vec3(0.0f), 100, LOD);
+	std::random_device rd;
+	unsigned int seed = rd();
+	seed = 1180901704;
+	TerrainChunk* terrain = new TerrainChunk(mapChunkSize, glm::vec3(0.0f), seed, 0);
+	TerrainChunk* terrain2 = new TerrainChunk(mapChunkSize, glm::vec3(1.0f, 0.0f, 0.0f), seed, LOD);
 
 	glm::vec3 light_color(255/255.0f, 254/255.0f, 230/255.0f);
 	glm::vec3 light_pos(mapChunkSize/2.0f, 200.0f, mapChunkSize/2.0f);
@@ -33,12 +36,23 @@ int main()
 	//glCullFace(GL_BACK);
 	//glFrontFace(GL_CCW);
 
+	unsigned int t = 0;
+	bool done = false;
+
 	while (window.isRunning())
 	{
 		window.clear();
 		window.processInput();
 
-		//terrain->update();
+		//if (t >= 20000 && !done)
+		//{
+		//	done = true;
+		//	t = 0;
+		//	printf("\nTIME");
+		//	terrain->update();
+		//	terrain2->update();
+		//}
+		//t++;
 
 		shader->enable();  
 		shader->setUniform3f("light_color", light_color);
@@ -47,11 +61,13 @@ int main()
 		shader->setUniformMat4("view", g_Camera3d->getViewMatrix());
 
 		terrain->render();
+		terrain2->render();
 
 		window.update();
 	}
 
 	delete terrain;
+	delete terrain2;
 	delete g_Camera3d;
 	delete g_Camera2d;
 	delete shader;

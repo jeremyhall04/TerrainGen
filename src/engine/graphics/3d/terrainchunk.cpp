@@ -5,17 +5,20 @@
 
 TerrainChunk::TerrainChunk() {}
 
-TerrainChunk::TerrainChunk(int width, glm::vec3 pos, int amplification, int lod = 0)
-	: pos(pos), amplification(amplification)
+TerrainChunk::TerrainChunk(int width, glm::vec3 pos, unsigned int seed, int lod = 0)
 {
 	this->width = width;
+	pos *= width;
+	this->pos = pos;
 	height_data = new float[(width + 1) * (width + 1)];
-	std::random_device rd;
-	seed = rd();
+	amplification = 100;
+
+	//std::random_device rd;
+	//seed = rd();
 	//seed = 1180901704;
 	create_noise_map();
 
-	shader = new Shader("res/shaders/heightmap.vert", "res/shaders/heightmap.frag");
+	//shader = new Shader("res/shaders/heightmap.vert", "res/shaders/heightmap.frag");
 	texture = new Texture("res/images/noise_map.png");
 
 	mesh = new Mesh();
@@ -25,9 +28,6 @@ TerrainChunk::TerrainChunk(int width, glm::vec3 pos, int amplification, int lod 
 	verticesPerLine = width / meshSimplificationIncrement;
 
 	init();
-
-	shader->enable();
-	shader->setUniform1i("tex", 0);
 }
 
 TerrainChunk::~TerrainChunk()
@@ -45,9 +45,9 @@ TerrainChunk::~TerrainChunk()
 	}
 	mesh = NULL;
 
-	if (shader != NULL)
+	/*if (shader != NULL)
 		delete shader;
-	shader = NULL;
+	shader = NULL;*/
 	if (texture != NULL)
 		delete texture;
 
@@ -59,56 +59,8 @@ TerrainChunk::~TerrainChunk()
 void TerrainChunk::init()
 {
 	mesh->init(pos, verticesPerLine, verticesPerLine);
-	printf("\nVertices Loaded = %d\n", mesh->nVertices);
 
-	int vIndex = 0;
-	float ymin = 0, ymax = 0;
-
-	// assigning heightmap
-	for (int z = 0; z <= width; z += meshSimplificationIncrement)
-	{
-		for (int x = 0; x <= width; x += meshSimplificationIncrement)
-		{
-			float y = x_pow(height_data[z * (width + 1) + x]) * amplification;
-			ymax = y > ymax ? y : ymax;
-			ymin = y < ymin ? y : ymin;
-			mesh->vd[vIndex].pos = glm::vec3(mesh->pos.x + x, mesh->pos.y + y, mesh->pos.z + z);
-			//mesh->vd[vIndex].normal = glm::vec3(0.0f);
-			//mesh->vd[vIndex].color = glm::vec4(1.0f);
-			mesh->vd[vIndex].uv = glm::vec2(x / (float)width, z / (float)width);
-			if (x < width && z < width)
-			{
-				addTriangle(vIndex, vIndex + (verticesPerLine + 1), vIndex + (verticesPerLine + 1) + 1);
-				addTriangle(vIndex, vIndex + (verticesPerLine + 1) + 1, vIndex + 1);
-			}
-			vIndex++;
-		}
-	}
-	printf("\nHeight max = %f | min = %f", ymax, ymin);
-
-	// calculating normals
-	vIndex = 0;
-	glm::vec3 U(0.0f), V(0.0f), p1(0.0f), p2(0.0f), p3(0.0f), p4(0.0f);
-	for (int z = 0; z <= width; z += meshSimplificationIncrement)
-	{
-		for (int x = 0; x <= width; x += meshSimplificationIncrement)
-		{
-			if (x < width && z < width)
-			{
-				p1 = mesh->vd[vIndex].pos;
-				p2 = mesh->vd[vIndex + (verticesPerLine + 1)].pos;
-				p3 = mesh->vd[vIndex + 1 + (verticesPerLine + 1)].pos;
-				U = p2 - p1;
-				V = p3 - p1;
-				mesh->vd[vIndex].normal = glm::cross(U, V);
-			}
-			else if (z >= width)
-				mesh->vd[vIndex].normal = mesh->vd[vIndex - (verticesPerLine + 1)].normal;
-			else
-				mesh->vd[vIndex].normal = mesh->vd[vIndex - 1].normal;
-			vIndex++;
-		}
-	}
+	create_mesh();
 
 	// setting data into buffers
 	glGenVertexArrays(1, &vao);
@@ -117,9 +69,9 @@ void TerrainChunk::init()
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, mesh->nVertices * sizeof(VertexData), mesh->vd, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, mesh->nVertices * sizeof(VertexData), mesh->vd, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndex * sizeof(GLuint), mesh->indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndex * sizeof(GLuint), mesh->indices, GL_DYNAMIC_DRAW);
 	/*glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->nIndices * sizeof(GLuint), mesh->indices, GL_STATIC_DRAW);*/
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)0);						// position
@@ -153,7 +105,7 @@ void TerrainChunk::create_noise_map()
 	{
 		for (int x = 0; x <= width; x++)
 		{
-			float val = p->accumulatedNoise2D(x / fx, y / fy, 5, 2.0f, 0.5f);
+			float val = p->accumulatedNoise2D((x + pos.x) / fx, (y + pos.z) / fy, 5, 2.0f, 0.5f);
 			height_data[index] = val;
 			index++;
 			max = val > max ? val : max;
@@ -186,25 +138,87 @@ void TerrainChunk::create_noise_map()
 	delete noise_map;
 }
 
-void TerrainChunk::addTriangle(int a, int b, int c) {
+void TerrainChunk::create_mesh()
+{
+	int vIndex = 0;
+	float ymin = 0, ymax = 0;
+
+	// assigning heightmap
+	for (int z = 0; z <= width; z += meshSimplificationIncrement)
+	{
+		for (int x = 0; x <= width; x += meshSimplificationIncrement)
+		{
+			float y = x_pow(height_data[z * (width + 1) + x]) * amplification;
+			ymax = y > ymax ? y : ymax;
+			ymin = y < ymin ? y : ymin;
+			mesh->vd[vIndex].pos = glm::vec3(mesh->pos.x + x, mesh->pos.y + y, mesh->pos.z + z);
+			mesh->vd[vIndex].uv = glm::vec2(x / (float)width, z / (float)width);
+			if (x < width && z < width)
+			{
+				add_triangle(vIndex, vIndex + (verticesPerLine + 1), vIndex + (verticesPerLine + 1) + 1);
+				add_triangle(vIndex, vIndex + (verticesPerLine + 1) + 1, vIndex + 1);
+			}
+			vIndex++;
+		}
+	}
+	//printf("\nHeight max = %f | min = %f\n", ymax, ymin);
+
+	// calculating normals
+	vIndex = 0;
+	glm::vec3 U(0.0f), V(0.0f), p1(0.0f), p2(0.0f), p3(0.0f), p4(0.0f);
+	for (int z = 0; z <= width; z += meshSimplificationIncrement)
+	{
+		for (int x = 0; x <= width; x += meshSimplificationIncrement)
+		{
+			if (x < width && z < width)
+			{
+				p1 = mesh->vd[vIndex].pos;
+				p2 = mesh->vd[vIndex + (verticesPerLine + 1)].pos;
+				p3 = mesh->vd[vIndex + 1 + (verticesPerLine + 1)].pos;
+				U = p2 - p1;
+				V = p3 - p1;
+				mesh->vd[vIndex].normal = glm::cross(U, V);
+			}
+			else if (z >= width)
+				mesh->vd[vIndex].normal = mesh->vd[vIndex - (verticesPerLine + 1)].normal;
+			else
+				mesh->vd[vIndex].normal = mesh->vd[vIndex - 1].normal;
+			vIndex++;
+		}
+	}
+
+	printf("\nLOD = %d\nVertices Loaded = %d", meshSimplificationIncrement, mesh->nVertices);
+}
+
+void TerrainChunk::add_triangle(int a, int b, int c) {
 	mesh->indices[triangleIndex] = a;
 	mesh->indices[triangleIndex + 1] = b;
 	mesh->indices[triangleIndex + 2] = c;
 	triangleIndex += 3;
 }
 
-// function to smooth out slopes
 float TerrainChunk::x_pow(float x)
 {
+	// function to smooth out slopes
 	float y = std::pow(x, 5);
 	return y;
 }
 
 void TerrainChunk::update()
 {
+	mesh->clear();
+
+	meshSimplificationIncrement = 4;
+	verticesPerLine = width / meshSimplificationIncrement;
+	triangleIndex = 0;
+	
+	mesh->init(pos, verticesPerLine, verticesPerLine);
+	create_mesh();
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, mesh->nVertices * sizeof(float), mesh->vd);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, mesh->nVertices * sizeof(VertexData), mesh->vd, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndex * sizeof(GLuint), mesh->indices, GL_DYNAMIC_DRAW);
 }
 
 void TerrainChunk::render()

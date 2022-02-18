@@ -10,13 +10,13 @@ class TerrainChunk
 {
 private:
 	// mesh properties
-	int width, resolution, amplification = 1;
+	int width, amplification = 1;
 	int triangleIndex = 0;
 	int meshSimplificationIncrement, verticesPerLine;
 
 	Mesh* mesh;
 	Texture* texture;
-	Shader* shader;
+	//Shader* shader;
 
 	GLuint vbo, vao, ebo;
 	glm::vec3 pos;
@@ -25,13 +25,14 @@ private:
 
 public:
 	TerrainChunk();
-	TerrainChunk(int width, glm::vec3 pos, int amplification, int lod);
+	TerrainChunk(int width, glm::vec3 pos, unsigned int seed, int lod);
 	~TerrainChunk();
 
 private:
 	void init();
 	void create_noise_map();
-	void addTriangle(int a, int b, int c);
+	void create_mesh();
+	void add_triangle(int a, int b, int c);
 	float x_pow(float x);
 
 public:
