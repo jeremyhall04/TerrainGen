@@ -20,6 +20,8 @@ bool operator<(const glm::vec2& lhs, const glm::vec2& rhs)
 	return lhs.x < rhs.x || lhs.x == rhs.x && (lhs.y < rhs.y || lhs.y == rhs.y /*&& lhs.z < rhs.z*/);
 }
 
+char hash_vector(glm::vec2 pos);
+
 int main()
 {
 	Window window;
@@ -34,22 +36,11 @@ int main()
 	unsigned int seed = rd();
 	seed = 1180901704;
 
-	//std::map<char, int> first;
-	//first.insert(std::pair<char, int>('a', 10));
-	//std::map<char, int>::iterator it;
-	//printf("\n\n");
-	//for (it = first.begin(); it != first.end(); ++it)
-	//	std::cout << it->first << " => " << it->second << "\n";
-
-
-	//std::map<glm::vec2, TerrainChunk*> chunkMap;
-	//TerrainChunk chunk(mapChunkSize, glm::vec3(0.0f), seed, 0);
-	//glm::vec2 pos(0.0f);
-	//chunkMap.insert(std::make_pair(pos, &chunk));
-
-	//std::pair<glm::vec2, TerrainChunk*> p(glm::vec2(0.0f), &chunk);
-
-
+	std::map<char, TerrainChunk*> chunkMap;
+	TerrainChunk chunk(mapChunkSize, glm::vec3(0.0f), seed, 0);
+	glm::vec2 pos(-2.0f, 3.0f);
+	char p = hash_vector(pos);
+	chunkMap.insert({ p, &chunk });
 
 	glm::vec3 light_color(255/255.0f, 254/255.0f, 230/255.0f);
 	glm::vec3 light_pos(mapChunkSize/2.0f, 200.0f, mapChunkSize/2.0f);
@@ -86,4 +77,25 @@ int main()
 	delete shader;
 
 	return 0;
+}
+
+char hash_vector(glm::vec2 pos)
+{
+	char p = (char)0;
+	if ((pos.x >= -3 && pos.x <= 3) && (pos.y >= -3 && pos.y <= 3))
+	{
+		int x = pos.x;
+		int y = pos.y;
+		bool nx = false, ny = false;
+		nx = x < 0;
+		ny = y < 0;
+		char xx = glm::abs(x);
+		char yy = glm::abs(y) << 2;
+		char p = xx | yy;
+		if (nx) p = p | (char)32;
+		if (ny) p = p | (char)64;
+	}
+	else
+		printf("\nError in hash_vector - position vector was out of range (-3,3)");
+	return p;
 }

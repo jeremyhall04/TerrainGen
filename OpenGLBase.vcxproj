@@ -205,9 +205,6 @@
     <None Include="res\shaders\texture.frag" />
     <None Include="res\shaders\texture.vert" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="out.bmp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

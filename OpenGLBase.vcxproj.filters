@@ -138,9 +138,4 @@
     <None Include="res\shaders\heightmap.vert" />
     <None Include="res\shaders\heightmap.frag" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="out.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
 </Project>
