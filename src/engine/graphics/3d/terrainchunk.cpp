@@ -2,14 +2,15 @@
 #include "../../noise/perlin.h"
 #include "../../utils/image/image.h"
 #include <random>
+#include <thread>
 
 TerrainChunk::TerrainChunk() {}
 
-TerrainChunk::TerrainChunk(int width, glm::vec3 pos, unsigned int seed, int lod = 0)
+TerrainChunk::TerrainChunk(int width, glm::vec3 chunkPos, unsigned int seed, int lod = 0)
 {
-	this->width = width;
-	pos *= width;
-	this->pos = pos;
+	this->size = width;
+	chunkPos *= width;
+	this->pos = chunkPos;
 	height_data = new float[(width + 1) * (width + 1)];
 	amplification = 120;
 	create_noise_map();
@@ -21,7 +22,7 @@ TerrainChunk::TerrainChunk(int width, glm::vec3 pos, unsigned int seed, int lod 
 	lod = lod < 6 ? lod : 6;
 	meshSimplificationIncrement = lod == 0 ? 1 : lod * 2;
 	verticesPerLine = width / meshSimplificationIncrement;
-	isVisible = false;
+	is_visible = false;
 
 	init();
 }
@@ -83,11 +84,63 @@ void TerrainChunk::init()
 	glBindVertexArray(0);
 }
 
+void TerrainChunk::create_mesh()
+{
+	int vIndex = 0;
+	float ymin = 0, ymax = 0;
+
+	// assigning heightmap
+	for (int z = 0; z <= size; z += meshSimplificationIncrement)
+	{
+		for (int x = 0; x <= size; x += meshSimplificationIncrement)
+		{
+			float y = x_pow(height_data[z * (size + 1) + x]) * amplification;
+			ymax = y > ymax ? y : ymax;
+			ymin = y < ymin ? y : ymin;
+			mesh->vd[vIndex].pos = glm::vec3(mesh->pos.x + x, mesh->pos.y + y, mesh->pos.z + z);
+			mesh->vd[vIndex].uv = glm::vec2(x / (float)size, z / (float)size);
+			if (x < size && z < size)
+			{
+				add_triangle(vIndex, vIndex + (verticesPerLine + 1), vIndex + (verticesPerLine + 1) + 1);
+				add_triangle(vIndex, vIndex + (verticesPerLine + 1) + 1, vIndex + 1);
+			}
+			vIndex++;
+		}
+	}
+	//printf("\nHeight max = %f | min = %f\n", ymax, ymin);
+
+	// calculating normals
+	vIndex = 0;
+	glm::vec3 U(0.0f), V(0.0f), p1(0.0f), p2(0.0f), p3(0.0f), p4(0.0f);
+	for (int z = 0; z <= size; z += meshSimplificationIncrement)
+	{
+		for (int x = 0; x <= size; x += meshSimplificationIncrement)
+		{
+			if (x < size && z < size)
+			{
+				p1 = mesh->vd[vIndex].pos;
+				p2 = mesh->vd[vIndex + (verticesPerLine + 1)].pos;
+				p3 = mesh->vd[vIndex + 1 + (verticesPerLine + 1)].pos;
+				U = p2 - p1;
+				V = p3 - p1;
+				mesh->vd[vIndex].normal = glm::cross(U, V);
+			}
+			else if (z >= size)
+				mesh->vd[vIndex].normal = mesh->vd[vIndex - (verticesPerLine + 1)].normal;
+			else
+				mesh->vd[vIndex].normal = mesh->vd[vIndex - 1].normal;
+			vIndex++;
+		}
+	}
+
+	//printf("\nLOD = %d\nVertices Loaded = %d", meshSimplificationIncrement, mesh->nVertices);
+}
+
 void TerrainChunk::create_noise_map()
 {
 	noise::Perlin* p = new noise::Perlin(seed);
 	Image* noise_map = new Image();
-	noise_map->generate(width, width);
+	noise_map->generate(size, size);
 
 	// prepare noise texture
 	float frequency = 4;
@@ -97,9 +150,9 @@ void TerrainChunk::create_noise_map()
 
 	// get pixel color from perlin noise
 	int index = 0;
-	for (int y = 0; y <= width; y++)
+	for (int y = 0; y <= size; y++)
 	{
-		for (int x = 0; x <= width; x++)
+		for (int x = 0; x <= size; x++)
 		{
 			float val = p->accumulatedNoise2D((x + pos.x) / fx, (y + pos.z) / fy, 5, 2.0f, 0.5f);
 			height_data[index] = val;
@@ -107,7 +160,7 @@ void TerrainChunk::create_noise_map()
 			max = val > max ? val : max;
 			min = val < min ? val : min;
 
-			if (x < width && y < width)
+			if (x < size && y < size)
 			{
 				if (val < 0.45f)
 					noise_map->setPixel(x, y, 0.2f, 0.4f, 1.0f);	// water
@@ -134,58 +187,6 @@ void TerrainChunk::create_noise_map()
 	delete noise_map;
 }
 
-void TerrainChunk::create_mesh()
-{
-	int vIndex = 0;
-	float ymin = 0, ymax = 0;
-
-	// assigning heightmap
-	for (int z = 0; z <= width; z += meshSimplificationIncrement)
-	{
-		for (int x = 0; x <= width; x += meshSimplificationIncrement)
-		{
-			float y = x_pow(height_data[z * (width + 1) + x]) * amplification;
-			ymax = y > ymax ? y : ymax;
-			ymin = y < ymin ? y : ymin;
-			mesh->vd[vIndex].pos = glm::vec3(mesh->pos.x + x, mesh->pos.y + y, mesh->pos.z + z);
-			mesh->vd[vIndex].uv = glm::vec2(x / (float)width, z / (float)width);
-			if (x < width && z < width)
-			{
-				add_triangle(vIndex, vIndex + (verticesPerLine + 1), vIndex + (verticesPerLine + 1) + 1);
-				add_triangle(vIndex, vIndex + (verticesPerLine + 1) + 1, vIndex + 1);
-			}
-			vIndex++;
-		}
-	}
-	//printf("\nHeight max = %f | min = %f\n", ymax, ymin);
-
-	// calculating normals
-	vIndex = 0;
-	glm::vec3 U(0.0f), V(0.0f), p1(0.0f), p2(0.0f), p3(0.0f), p4(0.0f);
-	for (int z = 0; z <= width; z += meshSimplificationIncrement)
-	{
-		for (int x = 0; x <= width; x += meshSimplificationIncrement)
-		{
-			if (x < width && z < width)
-			{
-				p1 = mesh->vd[vIndex].pos;
-				p2 = mesh->vd[vIndex + (verticesPerLine + 1)].pos;
-				p3 = mesh->vd[vIndex + 1 + (verticesPerLine + 1)].pos;
-				U = p2 - p1;
-				V = p3 - p1;
-				mesh->vd[vIndex].normal = glm::cross(U, V);
-			}
-			else if (z >= width)
-				mesh->vd[vIndex].normal = mesh->vd[vIndex - (verticesPerLine + 1)].normal;
-			else
-				mesh->vd[vIndex].normal = mesh->vd[vIndex - 1].normal;
-			vIndex++;
-		}
-	}
-
-	printf("\nLOD = %d\nVertices Loaded = %d", meshSimplificationIncrement, mesh->nVertices);
-}
-
 void TerrainChunk::add_triangle(int a, int b, int c) {
 	mesh->indices[triangleIndex] = a;
 	mesh->indices[triangleIndex + 1] = b;
@@ -200,17 +201,11 @@ float TerrainChunk::x_pow(float x)
 	return y;
 }
 
-float TerrainChunk::getNearestChunkEdge(glm::vec2 viewerPosition)
-{
-	// 
-	return 0.0f;
-}
-
 void TerrainChunk::update(glm::vec3 pos, int lod)
 {
 	mesh->clear();
 	meshSimplificationIncrement = lod;
-	verticesPerLine = width / meshSimplificationIncrement;
+	verticesPerLine = size / meshSimplificationIncrement;
 	triangleIndex = 0;
 	
 	mesh->init(pos, verticesPerLine, verticesPerLine);
@@ -227,5 +222,9 @@ void TerrainChunk::render()
 	texture->bind();
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, triangleIndex, GL_UNSIGNED_INT, 0);
-	//glDrawElements(GL_TRIANGLES, mesh->nIndices, GL_UNSIGNED_INT, 0);
+}
+
+void RequestMapData(void* callback)
+{
+
 }

@@ -64,6 +64,8 @@ void Window::init()
 
 void Window::update()
 {
+	static unsigned int avg;
+
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR)
 		std::cout << "\nERROR::WINDOW::UPDATE::OpenGl error::" << error;
@@ -83,7 +85,8 @@ void Window::update()
 	if (time.elapsed() - timer > 1.0f)
 	{
 		timer += 1.0f;
-		printf("\n%d fps", frames);
+		avg += frames;
+		printf("\n%d fps, avg = %f", frames, avg / timer);
 		frames = 0;
 	}
 }

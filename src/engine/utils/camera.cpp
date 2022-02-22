@@ -130,7 +130,7 @@ PerspectiveCamera::PerspectiveCamera()
 {}
 
 PerspectiveCamera::PerspectiveCamera(glm::vec3 position, glm::vec3 direction, float fov)
-	: Camera(position, direction), m_FOV(fov), m_Aspect((float)SCR_WIDTH / (float)SCR_HEIGHT), m_zNear(0.01f), m_zFar(1000.0f)
+	: Camera(position, direction), m_FOV(fov), m_Aspect((float)SCR_WIDTH / (float)SCR_HEIGHT), m_zNear(0.01f), m_zFar(10000.0f)
 {
 	m_Pitch = direction.y;
 	m_Yaw = (atan2(direction.z, direction.x) * 180) / PI;

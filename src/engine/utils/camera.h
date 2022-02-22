@@ -9,7 +9,7 @@ static bool m_FirstMouse = true;
 static float m_MouseLastX, m_MouseLastY;
 
 const float m_2DCameraSpeed = 4.0f;
-const float m_3DCameraSpeed = 50.0f;
+const float m_3DCameraSpeed = 200.0f;
 
 //class OrthographicCamera
 //{
